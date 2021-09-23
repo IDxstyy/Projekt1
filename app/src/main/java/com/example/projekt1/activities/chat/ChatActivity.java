@@ -96,9 +96,6 @@ public class ChatActivity extends AppCompatActivity implements AddUserDialogType
         sendMessageButton = findViewById(R.id.sendMessageButton);
         enteredText = findViewById(R.id.enterMessageET);
 
-
-
-
         // set sendMessageButton onClickListener
         sendMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
