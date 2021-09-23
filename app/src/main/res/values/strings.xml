@@ -26,5 +26,6 @@
     <string name="save">Speichern</string>
     <string name="new_task">Text...</string>
     <string name="add">Add</string>
+    <string name="user_id">User-Id:</string>
 
 </resources>

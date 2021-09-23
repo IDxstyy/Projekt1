@@ -60,7 +60,6 @@ public class PluginToDoFragment extends PluginBaseFragment implements PluginList
         tasksRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
         tasksAdapter = new ToDoAdapter(this.taskList, getActivity(), actualPlugin);
         tasksRecyclerView.setAdapter(tasksAdapter);
-        Collections.reverse(taskList);
         tasksAdapter.setTasks(taskList);
 
         // attach itemTouchHelper to Recyclerview
@@ -139,7 +138,6 @@ public class PluginToDoFragment extends PluginBaseFragment implements PluginList
 
     @Override
     public void handleDialogClose(DialogInterface dialog) {
-        Collections.reverse(taskList);
         tasksAdapter.setTasks(taskList);
         tasksAdapter.notifyDataSetChanged();
     }

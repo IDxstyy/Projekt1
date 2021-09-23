@@ -1,4 +1,6 @@
-package com.example.projekt1.models.plugins.pluginData;public class ToDo {
+package com.example.projekt1.models.plugins.pluginData;
+
+public class ToDo {
     //id = row in Database
     //status 0 = not checked
     //Status 1 = checked

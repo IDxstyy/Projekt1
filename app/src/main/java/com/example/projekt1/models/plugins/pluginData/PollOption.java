@@ -3,7 +3,6 @@ package com.example.projekt1.models.plugins.pluginData;
 import java.util.ArrayList;
 
 public class PollOption {
-
     String id;
     String optionTitle;
     ArrayList<String> userRef;

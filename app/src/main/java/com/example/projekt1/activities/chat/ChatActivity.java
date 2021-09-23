@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import com.example.projekt1.R;
 import com.example.projekt1.activities.plugins.PluginNotizenFragment;
@@ -45,6 +46,7 @@ public class ChatActivity extends AppCompatActivity implements AddUserDialogType
     EditText enteredText;
     ImageButton drawerToggleButton;
     ConstraintLayout fragmentContainer;
+    TextView userIdTextView;
 
 
     // recylcer adapter
@@ -134,6 +136,11 @@ public class ChatActivity extends AppCompatActivity implements AddUserDialogType
         navigationView = findViewById(R.id.nav_view);
         fragmentContainer = findViewById(R.id.chat_activity_fragment_container);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // set username to drawer
+        userIdTextView = navigationView.getHeaderView(0).findViewById(R.id.user_id_txtview2);
+        userIdTextView.setText(session.getUserName());
+
     }
 
     @Override

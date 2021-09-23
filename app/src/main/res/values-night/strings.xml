@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_account">No Account yet?</string>
+    <string name="create_new_account">Create New Account</string>
+    <string name="passwort">Passwort</string>
+    <string name="e_mail">E-Mail</string>
+</resources>
