@@ -39,17 +39,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:srcCompat="@drawable/ic_baseline_menu_24" />
 
-                <ImageButton
-                    android:id="@+id/deletePollBtn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    android:layout_marginEnd="5dp"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:srcCompat="@drawable/ic_baseline_delete_black"
-                    android:background="@color/transparent"
-                    android:visibility="invisible"/>
+
 
 
 
@@ -73,14 +63,14 @@
 
 
         <!-- for Fragments - change translationZ to show and hide current fragment -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/chat_activity_fragment_container"
-            android:translationZ="-10dp"
-            android:background="@color/white"
-            >
-        </androidx.constraintlayout.widget.ConstraintLayout>
+       <androidx.constraintlayout.widget.ConstraintLayout
+           android:layout_width="match_parent"
+           android:layout_height="match_parent"
+           android:id="@+id/chat_activity_fragment_container"
+           android:translationZ="-10dp"
+           android:background="@color/white"
+           >
+       </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
             android:id="@+id/linearLayout"
@@ -117,10 +107,10 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/drawer_menu">
+        app:menu="@menu/drawer_menu"
+        app:headerLayout="@layout/nav_header">
 
     </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>
-
 
 
