@@ -2,6 +2,7 @@ package com.example.projekt1.activities.plugins;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -29,7 +30,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.projekt1.R;
+import com.example.projekt1.dialog.ConfirmDialog;
 import com.example.projekt1.dialog.PluginListElementDialog;
+import com.example.projekt1.models.plugins.pluginData.Notiz;
 import com.example.projekt1.models.plugins.pluginData.PollOption;
 import com.example.projekt1.models.plugins.Plugin;
 import com.example.projekt1.models.plugins.PluginPoll;
@@ -45,12 +48,15 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class PluginPollFragment extends PluginBaseFragment implements PluginListElementDialog.DialogCloseListener {
 
     ItemTouchHelper itemTouchHelper;
     private RecyclerView pollRecyclerView;
     private PollAdapter pollAdapter;
+    private RecyclerView pollOptionsRecyclerView;
+    private OptionsAdapter optionsAdapter;
     private CheckBox checkBoxPoll;
     private TextView etPollOption;
     private TextView pollTitle;
@@ -63,6 +69,7 @@ public class PluginPollFragment extends PluginBaseFragment implements PluginList
 
     //List for Poll
     private ArrayList<Poll> pollList;
+    private ArrayList<PollOption> optionsList;
 
 
 
@@ -102,6 +109,13 @@ public class PluginPollFragment extends PluginBaseFragment implements PluginList
         pollRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
         pollAdapter = new PollAdapter(this.pollList, getActivity(), actualPlugin);
         pollRecyclerView.setAdapter(pollAdapter);
+
+        //pollOptionsRecyclerView = view.findViewById(R.id.pollOptionRecyclerView);
+        //pollOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+        //pollOptionsRecyclerView.setAdapter(optionsAdapter);
+
+        //Attach TouchHelper to Recyclerview
+
 
         this.pluginRefFirebase.orderByChild("id").equalTo(actualPlugin.getId()).addValueEventListener(new ValueEventListener() {
             @SuppressLint("NotifyDataSetChanged")
@@ -150,6 +164,9 @@ public class PluginPollFragment extends PluginBaseFragment implements PluginList
                 Toast.makeText(getContext(), "Du hast abgestimmt", Toast.LENGTH_SHORT).show();
             }
         }); */
+
+
+
     }
 
 
@@ -201,14 +218,13 @@ public class PluginPollFragment extends PluginBaseFragment implements PluginList
     }
 
 
-
-}
-
-class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollViewHolder> {
+    class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollViewHolder> implements ConfirmDialog.ConfirmDialogListener{
 
         private ArrayList<Poll> pollList;
         private FragmentActivity activity;
         private PluginPoll pluginPoll;
+
+
 
 
         //firebase
@@ -234,6 +250,8 @@ class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollViewHolder> {
         public void onBindViewHolder(@NonNull PollViewHolder holder, @SuppressLint("RecyclerView") int position) {
             final Poll item = pollList.get(position);
 
+
+
             // submit poll
             holder.subPollBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -249,12 +267,20 @@ class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollViewHolder> {
             OptionsAdapter optionsAdapter = new OptionsAdapter(this.pollList.get(position).getPollOptions(), activity, pluginPoll);
             holder.optionsRecyclerView.setAdapter(optionsAdapter);
 
+            itemTouchHelper = new ItemTouchHelper(new PollRecyclerItemTouchHelper(optionsAdapter));
+            itemTouchHelper.attachToRecyclerView(holder.optionsRecyclerView);
+
+
+
             // addPoll
             holder.addPollOption.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     PollOption pollOption = new PollOption();
                     pollOption.setOptionTitle(holder.pollOptionEditText.getText().toString());
+
+
+
                     Container.getInstance().btnRefZws = holder.subPollBtn;
 
                     Container.getInstance().zwischenspeicher = holder.pollOptionEditText.getText().toString(); /*
@@ -283,35 +309,44 @@ class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollViewHolder> {
                 public void onClick(View v) {
                     //Hier fehler
 
-                            openDialog();
-                            if(Container.getInstance().deleteValue){
-                                deletePoll(0);
+                    openDialog();
+                    if(Container.getInstance().deleteValue){
+                        ConfirmDialog.ConfirmDialogListener cDL = new ConfirmDialog.ConfirmDialogListener() {
+                            @Override
+                            public void applyData(boolean result) {
+                                deletePoll(position);
                             }
+                        };
+
+                    }
 
                 }
             });
 
 
         }
-    public void openDialog(){
+        public void openDialog(){
+            //PollDialog pollDialog = new PollDialog();
+            //pollDialog.show(activity.getSupportFragmentManager(), "Delete Poll");
+            ConfirmDialog confirmDialog = new ConfirmDialog();
+            confirmDialog.show(activity.getSupportFragmentManager(), "Delete Poll");
+        }
+        @Override
+        public void applyData(boolean result) {
 
-        PollDialog pollDialog = new PollDialog();
-        pollDialog.show(activity.getSupportFragmentManager(), "Poll löschen Dialog");
+        }
+        public void deletePoll(int position) {
+            Poll item = pollList.get(position);
+            pollList.remove(position);
+            notifyItemRemoved(position);
+            pluginPoll.setPolls(pollList);
 
-    }
-
-    public void deletePoll(int position) {
-        Poll item = pollList.get(position);
-        pollList.remove(position);
-        notifyItemRemoved(position);
-        pluginPoll.setPolls(pollList);
-
-        // firebase delete
-        pluginRefFirebase.child(pluginPoll.getId()).setValue(pluginPoll);
+            // firebase delete
+            pluginRefFirebase.child(pluginPoll.getId()).setValue(pluginPoll);
         /*
         Nochmal diesen Teil checken
          */
-    }
+        }
 
         @Override
         public int getItemCount() {
@@ -323,109 +358,186 @@ class PollAdapter extends RecyclerView.Adapter<PollAdapter.PollViewHolder> {
         }
 
 
-    public class PollViewHolder extends RecyclerView.ViewHolder {
-        TextView pollTitle;
-        EditText pollOptionEditText;
-        ImageButton addPollOption;
-        RecyclerView optionsRecyclerView;
-        Button subPollBtn;
-        ImageButton deletePollBtn;
 
 
-        PollViewHolder(View view) {
-            super(view);
-            pollTitle = view.findViewById(R.id.tVTitleOfPoll);
-            pollOptionEditText = view.findViewById(R.id.pollOptionInput);
-            addPollOption = view.findViewById(R.id.iBaddPollOptions);
-            subPollBtn = view.findViewById(R.id.pollSubmitButton);
-            optionsRecyclerView = view.findViewById(R.id.pollOptionRecyclerView);
-            deletePollBtn = view.findViewById(R.id.deletePollBtn);
-
-        }
-    }
+        public class PollViewHolder extends RecyclerView.ViewHolder {
+            TextView pollTitle;
+            EditText pollOptionEditText;
+            ImageButton addPollOption;
+            RecyclerView optionsRecyclerView;
+            Button subPollBtn;
+            ImageButton deletePollBtn;
 
 
-}
-
-class OptionsAdapter extends RecyclerView.Adapter<OptionsAdapter.OptionViewHolder> {
-
-    private ArrayList<PollOption> pollOptionList;
-    private FragmentActivity activity;
-    private PluginPoll pluginPoll;
-
-    //firebase
-    private FirebaseDatabase root = FirebaseDatabase.getInstance();
-    private DatabaseReference pluginRefFirebase = root.getReference("plugin");
-
-    //constructor passing database and activity
-    public OptionsAdapter(ArrayList<PollOption> pollOptionList, FragmentActivity activity, PluginPoll pluginPoll) {
-        this.pollOptionList = pollOptionList;
-        this.activity = activity;
-        this.pluginPoll = pluginPoll;
-    }
-
-    @NonNull
-    @Override
-    public OptionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.poll_list, parent, false);
-        return new OptionsAdapter.OptionViewHolder(itemView);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull OptionViewHolder holder, int position) {
-        final PollOption item = pollOptionList.get(position);
-
-        if (!Container.getInstance().zwischenspeicher.isEmpty()) {
-            holder.tVPollOption.setText(Container.getInstance().zwischenspeicher);
-        }
-
-        final PollOption pollItem = pollOptionList.get(position);
-        holder.pollCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                /* Logik für nur einmal checken*/
-
+            PollViewHolder(View view) {
+                super(view);
+                pollTitle = view.findViewById(R.id.tVTitleOfPoll);
+                pollOptionEditText = view.findViewById(R.id.pollOptionInput);
+                addPollOption = view.findViewById(R.id.iBaddPollOptions);
+                subPollBtn = view.findViewById(R.id.pollSubmitButton);
+                optionsRecyclerView = view.findViewById(R.id.pollOptionRecyclerView);
+                deletePollBtn = view.findViewById(R.id.deletePollBtn);
 
             }
-        });
-        if (item.isChecked()) {
-            holder.pollCheckBox.setChecked(true);
-            //Einf. von Methode zum updaten des Texts / Status der CheckBox
+        }
+
+
+    }
+
+    class OptionsAdapter extends RecyclerView.Adapter<OptionsAdapter.OptionViewHolder> {
+
+        private ArrayList<PollOption> pollOptionList;
+        private FragmentActivity activity;
+        private PluginPoll pluginPoll;
+
+
+
+        //firebase
+        private FirebaseDatabase root = FirebaseDatabase.getInstance();
+        private DatabaseReference pluginRefFirebase = root.getReference("plugin");
+
+        //constructor passing database and activity
+        public OptionsAdapter(ArrayList<PollOption> pollOptionList, FragmentActivity activity, PluginPoll pluginPoll) {
+            this.pollOptionList = pollOptionList;
+            this.activity = activity;
+            this.pluginPoll = pluginPoll;
+        }
+
+
+
+        @NonNull
+        @Override
+        public OptionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View itemView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.poll_list, parent, false);
+            return new OptionsAdapter.OptionViewHolder(itemView);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull OptionViewHolder holder, int position) {
+            final PollOption item = pollOptionList.get(position);
+
+
+
+            if (!Container.getInstance().zwischenspeicher.isEmpty()) {
+                holder.tVPollOption.setText(Container.getInstance().zwischenspeicher);
+            }
+
+            final PollOption pollItem = pollOptionList.get(position);
+            holder.pollCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    /* Logik für nur einmal checken*/
+
+
+                }
+            });
+            if (item.isChecked()) {
+                holder.pollCheckBox.setChecked(true);
+                //Einf. von Methode zum updaten des Texts / Status der CheckBox
+                pluginRefFirebase.child(pluginPoll.getId()).setValue(pluginPoll);
+                if(Container.getInstance().btnRefZws.getVisibility() == View.INVISIBLE) {
+                    Button submitBtn = Container.getInstance().getBtnRefZws();
+                    submitBtn.setVisibility(View.VISIBLE);
+                }
+            }
+        }
+        public Context getContext() {
+            return activity;
+        }
+
+        public void deleteItem(int position) {
+            PollOption item = pollOptionList.get(position);
+            pollOptionList.remove(position);
+            notifyItemRemoved(position);
+            pluginPoll.setPollOptions(pollOptionList);
+            // firebase delete
             pluginRefFirebase.child(pluginPoll.getId()).setValue(pluginPoll);
-            if(Container.getInstance().btnRefZws.getVisibility() == View.INVISIBLE) {
-                Button submitBtn = Container.getInstance().getBtnRefZws();
-                submitBtn.setVisibility(View.VISIBLE);
+        }
+
+        public void editItem(int position) {
+            PollOption item = pollOptionList.get(position);
+            Bundle bundle = new Bundle();
+            bundle.putString("id", item.getId());
+            bundle.putString("option", item.getOptionTitle());
+            BottomSheetDialogFragment addNewPollOptionDialog = new PluginListElementDialog(pluginPoll);
+            addNewPollOptionDialog.setArguments(bundle);
+            addNewPollOptionDialog.show(activity.getSupportFragmentManager(), "Poll Option bearbeiten");
+        }
+
+        @Override
+        public int getItemCount() {
+            return this.pollOptionList.size();
+        }
+
+        public void setPolls(ArrayList<PollOption> pollOptionList) {
+            this.pollOptionList = pollOptionList;
+        }
+
+        public class OptionViewHolder extends RecyclerView.ViewHolder {
+            TextView tVPollOption;
+            CheckBox pollCheckBox;
+
+
+            OptionViewHolder(View view) {
+                super(view);
+                tVPollOption = view.findViewById(R.id.tVPollOption);
+                pollCheckBox = view.findViewById(R.id.checkBoxPoll);
+            }
+
+        }
+
+
+
+    }
+
+
+    class PollRecyclerItemTouchHelper extends ItemTouchHelper.SimpleCallback{
+
+        OptionsAdapter adapter;
+
+        public PollRecyclerItemTouchHelper(OptionsAdapter adapter) {
+            super(0,ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
+            this.adapter = adapter;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            final int position = viewHolder.getAdapterPosition();
+            if (direction == ItemTouchHelper.LEFT)
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(adapter.getContext());
+                builder.setTitle("Löschen");
+                builder.setMessage("Wirklich löschen?");
+                builder.setPositiveButton("Ja, löschen!", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        adapter.deleteItem(position);
+                    }
+                });
+                builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        adapter.notifyItemChanged(viewHolder.getAdapterPosition());
+                    }
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }else{
+                adapter.editItem(position);
             }
         }
-    }
-
-
-    @Override
-    public int getItemCount() {
-        return this.pollOptionList.size();
-    }
-
-    public void setPolls(ArrayList<PollOption> pollOptionList) {
-        this.pollOptionList = pollOptionList;
-    }
-
-    public class OptionViewHolder extends RecyclerView.ViewHolder {
-        TextView tVPollOption;
-        CheckBox pollCheckBox;
-
-
-        OptionViewHolder(View view) {
-            super(view);
-            tVPollOption = view.findViewById(R.id.tVPollOption);
-            pollCheckBox = view.findViewById(R.id.checkBoxPoll);
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
         }
 
+
     }
-
-
-
 }
+
+
+
 
 class Container{
     String zwischenspeicher;
@@ -450,30 +562,4 @@ class Container{
     }
 }
 
-class PollDialog extends AppCompatDialogFragment {
-    @NonNull
-    @Override
-    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getContext());
-        dialogBuilder.setTitle("Alle Polls löschen?");
-        dialogBuilder.setPositiveButton("Ja, löschen!", new DialogInterface.OnClickListener(){
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(getContext(),"Yes you clicked", Toast.LENGTH_SHORT).show();
-                Container.getInstance().deleteValue = true;
-
-            }
-        });
-        dialogBuilder.setNegativeButton("Abbrechen", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Container.getInstance().deleteValue = false;
-              dismiss();
-            }
-        });
-
-        return dialogBuilder.create();
-    }
-}
 

@@ -1,12 +1,15 @@
 package com.example.projekt1.models.plugins;
 
 import com.example.projekt1.models.plugins.pluginData.Poll;
+import com.example.projekt1.models.plugins.pluginData.PollOption;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class PluginPoll extends Plugin<Poll> {
+
+    Poll poll;
 
     public PluginPoll (String id, String beschreibung, String chatRef, String typ) {
         super(id, beschreibung, chatRef, "pluginPoll");
@@ -42,4 +45,8 @@ public class PluginPoll extends Plugin<Poll> {
     public void setPolls(ArrayList<Poll> newPolls){
         this.pluginData = newPolls;
     }
+    public void setPollOptions(ArrayList<PollOption> pollOptions) {
+        poll.setPollOptions(pollOptions);
+    }
+
 }
